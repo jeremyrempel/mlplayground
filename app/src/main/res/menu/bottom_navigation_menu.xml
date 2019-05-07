@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/navlandmark"
+        android:icon="@android:drawable/ic_menu_mylocation"
+        android:title="Landmark" />
+    <item
+        android:id="@+id/navimage"
+        android:icon="@android:drawable/ic_menu_report_image"
+        android:title="Image" />
+</menu>
