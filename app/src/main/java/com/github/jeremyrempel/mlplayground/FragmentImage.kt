@@ -7,6 +7,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.squareup.picasso.Picasso
@@ -16,21 +19,37 @@ import kotlinx.android.synthetic.main.fragment_landmark.btn_go
 import kotlinx.android.synthetic.main.fragment_landmark.edt_url
 import kotlinx.coroutines.*
 import java.net.URL
+import kotlin.coroutines.CoroutineContext
 import kotlinx.android.synthetic.main.fragment_landmark.image as image1
 import kotlinx.android.synthetic.main.fragment_landmark.loading as loading1
 import kotlinx.android.synthetic.main.fragment_landmark.text1 as text11
 
-class FragmentImage : Fragment() {
-
-    private val job = Job()
-    private val uiScope = CoroutineScope(Dispatchers.Main + job)
+class FragmentImage : Fragment(), CoroutineScope, LifecycleObserver {
 
     val apple =
         "https://images.unsplash.com/photo-1513677785800-9df79ae4b10b?ixlib=rb-1.2.1&q=85&fm=jpg&crop=entropy&cs=srgb"
     val monkey =
         "https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?ixlib=rb-1.2.1&q=85&fm=jpg&crop=entropy&cs=srgb"
-
     val baseball = "https://images.unsplash.com/photo-1519152638844-5f96fded9237?ixlib=rb-1.2.1&q=85&fm=jpg&crop=entropy&cs=srgb"
+    val wallet = "https://images.unsplash.com/photo-1532033375034-a29004ea9769?ixlib=rb-1.2.1&q=85&fm=jpg&crop=entropy&cs=srgb"
+
+
+    private lateinit var job: Job
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+    fun onCreate() {
+        job = Job()
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    fun destroy() = job.cancel()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        lifecycle.addObserver(this)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_image, container, false)
@@ -42,12 +61,13 @@ class FragmentImage : Fragment() {
         btn_apple.setOnClickListener { edt_url.setText(apple) }
         btn_monkey.setOnClickListener { edt_url.setText(monkey) }
         btn_feet.setOnClickListener { edt_url.setText(baseball) }
+        btn_wallet.setOnClickListener { edt_url.setText(wallet) }
 
         btn_go.setOnClickListener { loadFromUrl(edt_url.text.toString()) }
     }
 
     private fun loadFromUrl(url: String) {
-        uiScope.launch {
+        launch {
             val imageView = image
             Picasso.get().load(url).resize(500, 500).into(imageView)
 
@@ -90,5 +110,10 @@ class FragmentImage : Fragment() {
     private suspend fun getBitmapFromURL(src: String): Bitmap = withContext(Dispatchers.IO) {
         val connection = URL(src).openConnection()
         connection.getInputStream().use(BitmapFactory::decodeStream)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 }

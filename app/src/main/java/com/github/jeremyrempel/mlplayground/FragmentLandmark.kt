@@ -8,6 +8,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.cloud.landmark.FirebaseVisionCloudLandmark
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
@@ -15,11 +18,11 @@ import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.fragment_landmark.*
 import kotlinx.coroutines.*
 import java.net.URL
+import kotlin.coroutines.CoroutineContext
 
-class FragmentLandmark : Fragment() {
+class FragmentLandmark : Fragment(), CoroutineScope, LifecycleObserver {
 
-    private val job = Job()
-    private val uiScope = CoroutineScope(Dispatchers.Main + job)
+
 
     //    val url = "https://images.unsplash.com/photo-1550837725-bdcb030d1e54?ixlib=rb-1.2.1&q=85&fm=jpg&crop=entropy&cs=srgb
     val eiffel =
@@ -30,6 +33,23 @@ class FragmentLandmark : Fragment() {
         "https://images.unsplash.com/photo-1503572327579-b5c6afe5c5c5?ixlib=rb-1.2.1&q=85&fm=jpg&crop=entropy&cs=srgb"
 
     val empire = "https://upload.wikimedia.org/wikipedia/commons/1/10/Empire_State_Building_%28aerial_view%29.jpg"
+
+    private lateinit var job: Job
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+    fun onCreate() {
+        job = Job()
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    fun destroy() = job.cancel()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        lifecycle.addObserver(this)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_landmark, container, false)
@@ -47,7 +67,8 @@ class FragmentLandmark : Fragment() {
     }
 
     private fun loadFromUrl(url: String) {
-        uiScope.launch {
+
+        launch {
             val imageView = image
             Picasso.get().load(url).resize(1000, 1000).into(imageView)
 
@@ -101,7 +122,6 @@ class FragmentLandmark : Fragment() {
             loading.visibility = View.GONE
         }
     }
-
 
     private suspend fun getBitmapFromURL(src: String): Bitmap = withContext(Dispatchers.IO) {
         val connection = URL(src).openConnection()

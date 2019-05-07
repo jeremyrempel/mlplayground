@@ -2,6 +2,7 @@ package com.github.jeremyrempel.mlplayground
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import kotlinx.android.synthetic.main.activity_main.*
 import java.lang.IllegalArgumentException
 
@@ -20,7 +21,7 @@ class MainActivity: AppCompatActivity() {
         }
 
         bottom_navigation.setOnNavigationItemSelectedListener {
-            val frag = when(it.itemId) {
+            val frag: Fragment = when(it.itemId) {
                 R.id.navlandmark -> {
                     title = "Landmark"
                     FragmentLandmark()
@@ -33,7 +34,9 @@ class MainActivity: AppCompatActivity() {
             }
 
             supportFragmentManager.apply {
-                beginTransaction().replace(R.id.fragment_container, frag).commit()
+                beginTransaction()
+                    .setCustomAnimations(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
+                    .replace(R.id.fragment_container, frag).commit()
             }
 
             true
